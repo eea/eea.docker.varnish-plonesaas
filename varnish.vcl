@@ -201,13 +201,11 @@ sub vcl_backend_error {
         <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
         <html>
           <head>
-            <title>Varnish cache server: "} + resp.status + " " + resp.reason + {" </title>
+            <title>Varnish cache server: "} + beresp.status + " " + beresp.reason + {" </title>
           </head>
           <body>
-            <h1>Error "} + resp.status + " " + resp.reason + {"</h1>
-            <p>"} + resp.reason + {"</p>
-            <h3>Guru Meditation:</h3>
-            <p>XID: "} + req.xid + {"</p>
+            <h1>Error "} + beresp.status + " " + beresp.reason + {"</h1>
+            <p>"} + beresp.reason + {"</p>
             <hr>
             <p>Varnish cache server</p>
           </body>
