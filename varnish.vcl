@@ -14,11 +14,12 @@ sub vcl_recv {
             # No point in compressing these
             unset req.http.Accept-Encoding;
         } else if (req.http.Accept-Encoding ~ "br") {
-            set req.http.Accept-Encoding = "br";
+            # set req.http.X-brotli = "true";
+            set req.http.Accept-Encoding = "TESTENCODING";
         } else if (req.http.Accept-Encoding ~ "gzip") {
-            set req.http.Accept-Encoding = "gzip";
+            set req.http.Accept-Encoding = "TESTENCODING";
         } else if (req.http.Accept-Encoding ~ "deflate") {
-            set req.http.Accept-Encoding = "deflate";
+            set req.http.Accept-Encoding = "TESTENCODING";
         } else {
             # unknown algorithm
             unset req.http.Accept-Encoding;
