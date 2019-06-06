@@ -93,8 +93,8 @@ sub vcl_recv {
 
     ### always cache these items:
 
-    # javascript
-    if (req.method == "GET" && req.url ~ "\.(js)") {
+    # javascript and css
+    if (req.method == "GET" && req.url ~ "\.(js|css)") {
         return(hash);
     }
 
