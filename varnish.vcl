@@ -13,9 +13,6 @@ sub vcl_recv {
         if (req.url ~ "\.(jpg|png|gif|gz|tgz|bz2|tbz|mp3|ogg)$") {
             # No point in compressing these
             unset req.http.Accept-Encoding;
-        } else if (req.http.Accept-Encoding ~ "br") {
-            # set req.http.X-brotli = "true";
-            set req.http.Accept-Encoding = "br";
         } else if (req.http.Accept-Encoding ~ "gzip") {
             set req.http.Accept-Encoding = "gzip";
         } else if (req.http.Accept-Encoding ~ "deflate") {
