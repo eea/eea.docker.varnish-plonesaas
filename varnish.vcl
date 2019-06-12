@@ -78,12 +78,16 @@ sub vcl_recv {
             return(pass);
         }
 
-        # PURGE
+        # PURGE - The CacheFu product can invalidate updated URLs
         if (req.method == "PURGE") {
             if (!client.ip ~ purge) {
                 return (synth(405, "Not allowed."));
             }
-            return (purge);
+
+            # replace normal purge with ban-lurker way - may not work
+            # Cleanup double slashes: '//' -> '/' - refs #95891
+            ban ("obj.http.x-url == " + regsub(req.url, "\/\/", "/"));
+            return (synth(200, "Ban added. URL will be purged by lurker"));
         }
 
         return(pass);
@@ -128,7 +132,7 @@ sub vcl_pipe {
 sub vcl_backend_response {
     # needed for ban-lurker
     # Cleanup double slashes: '//' -> '/' - refs #95891
-    # set beresp.http.x-url = regsub(bereq.url, "\/\/", "/");
+    set beresp.http.x-url = regsub(bereq.url, "\/\/", "/");
 
     # Varnish determined the object was not cacheable
     if (!(beresp.ttl > 0s)) {
@@ -163,7 +167,7 @@ sub vcl_backend_response {
 
 sub vcl_deliver {
     # needed for ban-lurker, we remove it here
-    # unset resp.http.x-url;
+    unset resp.http.x-url;
 
     # add a note in the header regarding the backend
     set resp.http.X-Backend = req.backend_hint;
