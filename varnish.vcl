@@ -36,16 +36,8 @@ sub vcl_recv {
     {
         set req.http.X-Username = regsub( req.http.Cookie, "^.*?__ac=([^;]*);*.*$", "\1" );
 
-        if (req.url ~ "/styles/$")
-        {
-            # pick up a round-robin instance for authenticated users
-            set req.backend_hint = cluster_mediaserver.backend();
-        }
-        else
-        {
-            # pick up a round-robin instance for authenticated users
-            set req.backend_hint = cluster_haproxy.backend();
-        }
+        # pick up a round-robin instance for authenticated users
+        set req.backend_hint = cluster_haproxy.backend();
 
         # pass (no caching)
         unset req.http.If-Modified-Since;
@@ -64,22 +56,15 @@ sub vcl_recv {
         }
         else
         {
-            if (req.url ~ "/styles/$")
+            # downloads go only to these backends
+            if (req.url ~ "/(file|download)$" || req.url ~ "/(file|download)\?(.*)")
             {
-                set req.backend_hint = cluster_mediaserver.backend();
+                set req.backend_hint = cluster_haproxy.backend();
             }
             else
             {
-                # downloads go only to these backends
-                if (req.url ~ "/(file|download)$" || req.url ~ "/(file|download)\?(.*)")
-                {
-                    set req.backend_hint = cluster_haproxy.backend();
-                }
-                else
-                {
-                    # pick up a random instance for anonymous users
-                    set req.backend_hint = cluster_haproxy.backend();
-                }
+                # pick up a random instance for anonymous users
+                set req.backend_hint = cluster_haproxy.backend();
             }
         }
     }
