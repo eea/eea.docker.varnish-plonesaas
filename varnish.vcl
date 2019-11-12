@@ -32,9 +32,9 @@ sub vcl_recv {
 
     # cache authenticated requests by adding header
     set req.http.X-Username = "Anonymous";
-    if (req.http.Cookie && req.http.Cookie ~ "__ac(|_(name|password|persistent))=")
+    if (req.http.Cookie && req.http.Cookie ~ "__ac__eionet(|_(name|password|persistent))=")
     {
-        set req.http.X-Username = regsub( req.http.Cookie, "^.*?__ac=([^;]*);*.*$", "\1" );
+        set req.http.X-Username = regsub( req.http.Cookie, "^.*?__ac__eionet=([^;]*);*.*$", "\1" );
 
         # pick up a round-robin instance for authenticated users
         set req.backend_hint = cluster_haproxy.backend();
