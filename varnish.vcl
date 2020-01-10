@@ -343,8 +343,6 @@ sub vcl_synth {
             <body>
             <div class="vertical-align">
               <div style="text-align: center;">
-                <p><strong>European Environment Agency (EEA)</strong> <a href="http://www.eea.europa.eu/">www.eea.europa.eu</a></p>
-                <hr>
                 <h2 style="margin: 12px 0;">Our apologies our website is too popular right now...</h2>
                 <hr>
                 <p style="font-style: italic;">If this problem persists Contact EEA Web Team (web.helpdesk at eea.europa.eu)</p>
