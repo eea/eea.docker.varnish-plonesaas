@@ -30,8 +30,19 @@ sub vcl_recv {
         set req.http.X-Forwarded-Proto = "http";
     }
 
-    # cache authenticated requests by adding header
     set req.http.X-Username = "Anonymous";
+
+    # Do not cache RestAPI authenticated requests
+    if (req.http.Authorization || req.http.Authenticate) {
+        set req.http.X-Username = "Authenticated (RestAPI)";
+        set req.backend_hint = cluster_haproxy.backend();
+
+        # pass (no caching)
+        unset req.http.If-Modified-Since;
+        return(pass);
+    }
+
+    # Do not cache authenticated requests
     if (req.http.Cookie && req.http.Cookie ~ "__ac__eionet(|_(name|password|persistent))=")
     {
         set req.http.X-Username = regsub( req.http.Cookie, "^.*?__ac__eionet=([^;]*);*.*$", "\1" );
@@ -43,32 +54,19 @@ sub vcl_recv {
         unset req.http.If-Modified-Since;
         return(pass);
     }
-    else
-    {
-        # login form always goes to the reserved instances
-        if (req.url ~ "login_form$" || req.url ~ "login$")
-        {
-            set req.backend_hint = cluster_haproxy.backend();
 
-            # pass (no caching)
-            unset req.http.If-Modified-Since;
-            return(pass);
-        }
-        else
-        {
-            # downloads go only to these backends
-            if (req.url ~ "/(file|download)$" || req.url ~ "/(file|download)\?(.*)")
-            {
-                set req.backend_hint = cluster_haproxy.backend();
-            }
-            else
-            {
-                # pick up a random instance for anonymous users
-                set req.backend_hint = cluster_haproxy.backend();
-            }
-        }
+    # Do not cache login form
+    if (req.url ~ "login_form$" || req.url ~ "login$")
+    {
+        set req.backend_hint = cluster_haproxy.backend();
+
+        # pass (no caching)
+        unset req.http.If-Modified-Since;
+        return(pass);
     }
 
+    # Pick up a random instance for anonymous users
+    set req.backend_hint = cluster_haproxy.backend();
 
     # Handle special requests
     if (req.method != "GET" && req.method != "HEAD") {
@@ -234,22 +232,149 @@ sub vcl_synth {
 
     if ( resp.status >= 500 && resp.status <= 505) {
         # synthetic(std.fileread("/etc/varnish/500msg.html"));
-        synthetic({"
-        <?xml version="1.0" encoding="utf-8"?>
-        <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-        <html>
-          <head>
-            <title>Varnish cache server: "} + resp.status + " " + resp.reason + {" </title>
-          </head>
-          <body>
-            <h1>Error "} + resp.status + " " + resp.reason + {"</h1>
-            <p>"} + resp.reason + {"</p>
-            <h3>Guru Meditation:</h3>
-            <p>XID: "} + req.xid + {"</p>
-            <hr>
-            <p>Varnish cache server</p>
-          </body>
-        </html>
+        synthetic({"<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+            <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-US" lang="en-US">
+            <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <style type="text/css">
+            html,
+            body {
+              height: 100%;
+              width: 100%;
+              padding: 0;
+              margin: 0;
+              border: 0;
+              overflow: auto;
+              background-color: #006699;
+              color: #fff;
+              font-family: Arial,sans-serif;
+            }
+            .vertical-align {
+              display: block;
+              width: 400px;
+              position: relative;
+              top: 50%;
+              *top: 25%;
+              -webkit-transform: translateY(-50%);
+              -ms-transform: translateY(-50%);
+              transform: translateY(-50%);
+              margin: 0 auto;
+            }
+            button,
+            a.button,
+            a.button:link,
+            a.button:visited {
+              -webkit-appearance: none;
+              -webkit-border-radius: 3px;
+              -moz-border-radius: 3px;
+              -ms-border-radius: 3px;
+              -o-border-radius: 3px;
+              border-radius: 3px;
+              -webkit-background-clip: padding;
+              -moz-background-clip: padding;
+              background-clip: padding-box;
+              background: #dddddd repeat-x;
+              background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #ffffff), color-stop(100%, #dddddd));
+              background-image: -webkit-linear-gradient(#ffffff, #dddddd);
+              background-image: -moz-linear-gradient(#ffffff, #dddddd);
+              background-image: -o-linear-gradient(#ffffff, #dddddd);
+              background-image: linear-gradient(#ffffff, #dddddd);
+              border: 1px solid;
+              border-color: #bbbbbb;
+              cursor: pointer;
+              color: #333333;
+              display: inline-block;
+              font: 15px/20px Arial, sans-serif;
+              overflow: visible;
+              margin: 0;
+              padding: 3px 10px;
+              text-decoration: none;
+              vertical-align: top;
+              width: auto;
+              *padding-top: 2px;
+              *padding-bottom: 0;
+            }
+            .btn-eea {
+              background: #478ea5 repeat-x;
+              background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #478ea5), color-stop(100%, #346f83));
+              background-image: -webkit-linear-gradient(#478ea5, #346f83);
+              background-image: -moz-linear-gradient(#478ea5, #346f83);
+              background-image: -o-linear-gradient(#478ea5, #346f83);
+              background-image: linear-gradient(#478ea5, #346f83);
+              border: 1px solid;
+              border-color: #265a6c;
+              color: white;
+            }
+            button:hover,
+            a.button:hover {
+              background-image:none;
+            }
+            hr {
+              opacity: 0.5;
+              margin: 12px 0;
+              border: 0!important;
+              height: 1px;
+              background: white;
+            }
+            a,
+            a:link,
+            a:visited {
+              color: white;
+            }
+            .huge {
+              font-size: 72px;
+            }
+            .clearfix:before,
+            .clearfix:after {
+                display:table;
+                content:" ";
+            }
+            .clearfix:after{
+                clear:both;
+            }
+            .pull-left {
+                float: left;
+            }
+            .pull-right {
+                float: right;
+            }
+            </style>
+            </head>
+            <body>
+            <div class="vertical-align">
+              <div style="text-align: center;">
+                <p><strong>European Environment Agency (EEA)</strong> <a href="http://www.eea.europa.eu/">www.eea.europa.eu</a></p>
+                <hr>
+                <h2 style="margin: 12px 0;">Our apologies our website is too popular right now...</h2>
+                <hr>
+                <p style="font-style: italic;">If this problem persists Contact EEA Web Team (web.helpdesk at eea.europa.eu)</p>
+                <p style="font-size: 90%"><a href="http://www.eea.europa.eu/">European Environment Agency</a>, Kongens Nytorv 6, 1050 Copenhagen K, Denmark - Phone: +45 3336 7100</p>  <br>
+                </p>
+              </div>
+            </div>
+            <script type="text/javascript">
+              document.getElementById("focus").focus();
+            </script>
+            <!-- Matomo -->
+            <script type="text/javascript">
+              var _paq = _paq || [];
+              /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+              _paq.push(["setDocumentTitle", document.domain + "/" + document.title]);
+              _paq.push(["setCookieDomain", "*.eea.europa.eu"]);
+              _paq.push(['trackPageView']);
+              _paq.push(['enableLinkTracking']);
+              _paq.push(['trackEvent', 'Errors', beresp.status, window.location.href, 1]);
+              (function() {
+                var u="https://matomo.eea.europa.eu/";
+                _paq.push(['setTrackerUrl', u+'piwik.php']);
+                _paq.push(['setSiteId', '2']);
+                var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+                g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+              })();
+            </script>
+            <noscript><p><img src="https://matomo.eea.europa.eu/piwik.php?idsite=3&amp;rec=1" style="border:0;" alt="" /></p></noscript>
+            <!-- End Matomo Code -->
+            </body></html>
     "});
     } else {
         synthetic({"<?xml version="1.0" encoding="utf-8"?>
@@ -262,7 +387,7 @@ sub vcl_synth {
         <body>
         <h1>Error "} + resp.status + " " + resp.http.response + {"</h1>
         <p>"} + resp.http.response + {"</p>
-        <h3>Guru Meditation:</h3>
+        <h3>Sorry, an error occured. If this problem persists Contact EEA Web Team (web.helpdesk at eea.europa.eu)</h3>
         <p>XID: "} + req.xid + {"</p>
         <address>
         <a href="http://www.varnish-cache.org/">Varnish</a>
