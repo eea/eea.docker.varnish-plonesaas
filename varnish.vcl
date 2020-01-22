@@ -343,9 +343,9 @@ sub vcl_synth {
             <body>
             <div class="vertical-align">
               <div style="text-align: center;">
-                <h2 style="margin: 12px 0;">Our apologies our website is too popular right now...</h2>
+                <h2 style="margin: 12px 0;">Our apologies, the website has encountered an error.</h2>
                 <hr>
-                <p style="font-style: italic;">If this problem persists Contact EEA Web Team (web.helpdesk at eea.europa.eu)</p>
+                <p style="font-style: italic;">We have been notified by the error and will look at it as soon as possible. You may want to visit the <a href="">EEA Systems Status</a> site to see latest status updates from EEA Systems.</p>
                 <p style="font-size: 90%"><a href="http://www.eea.europa.eu/">European Environment Agency</a>, Kongens Nytorv 6, 1050 Copenhagen K, Denmark - Phone: +45 3336 7100</p>  <br>
                 </p>
               </div>
